@@ -10,8 +10,9 @@ import { Layout } from "./components/Layout"
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 0,
-      retry: 0,
+      // staleTime: 0,
+      // retry: 0,
+      // refetchOnWindowFocus: true,
     },
   },
 })

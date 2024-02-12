@@ -1,6 +1,5 @@
 import { css } from "@emotion/react"
 import { PropsWithChildren } from "react"
-import { colors } from "ui"
 
 export const Layout = ({ children }: PropsWithChildren) => {
   return (
