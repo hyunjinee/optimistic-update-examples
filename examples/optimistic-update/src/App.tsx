@@ -1,88 +1,101 @@
-import { useState } from "react";
-import "./App.css";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { delay } from "./utils";
-import { v4 as uuid } from "uuid";
-import axios from "axios";
+import { useState } from "react"
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query"
+import { delay } from "./utils"
+import { v4 as uuid } from "uuid"
+import axios from "axios"
+import { css } from "@emotion/react"
 
 type Todo = {
-  id: string;
-  title: string;
-};
+  id: string
+  title: string
+}
 
 const useTodoQuery = () =>
-  useQuery<Todo[]>({
+  useSuspenseQuery<Todo[]>({
     queryKey: ["todos"],
     queryFn: async () => {
-      await delay(2000);
-      const response = await axios.get("http://localhost:3000/todos");
+      await delay(2000)
+      const response = await axios.get("http://localhost:3000/todos")
 
-      return response.data;
+      return response.data
     },
-    suspense: true,
-  });
+  })
 
 const useTodoMutation = () => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (todo: string) => {
-      await delay(3000);
+      await delay(3000)
       const response = await axios.post("http://localhost:3000/todos", {
         title: todo,
         id: uuid(),
-      });
+      })
 
-      return response.data;
+      return response.data
     },
     onMutate: async (todo: string) => {
-      await queryClient.cancelQueries(["todos"]);
+      await queryClient.cancelQueries({ queryKey: ["todos"] })
 
-      const previousTodos = queryClient.getQueryData<Todo[]>(["todos"]);
+      const previousTodos = queryClient.getQueryData<Todo[]>(["todos"])
 
       queryClient.setQueryData<Todo[]>(["todos"], (prev) => {
         if (prev) {
-          return [...prev, { title: todo, id: uuid() }];
+          return [...prev, { title: todo, id: uuid() }]
         }
 
-        return [{ title: todo, id: uuid() }];
-      });
+        return [{ title: todo, id: uuid() }]
+      })
 
-      return { previousTodos };
+      return { previousTodos }
     },
     onError: (err, todo, context) => {
       if (context?.previousTodos) {
-        queryClient.setQueryData<Todo[]>(["todos"], context.previousTodos);
+        queryClient.setQueryData<Todo[]>(["todos"], context.previousTodos)
       }
     },
-    onSettled: () => queryClient.invalidateQueries(["todos"]),
-  });
-};
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["todos"] }),
+  })
+}
 
 function App() {
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState("")
 
-  const { data: todos } = useTodoQuery();
+  const { data: todos } = useTodoQuery()
 
-  const { mutate } = useTodoMutation();
+  const { mutate } = useTodoMutation()
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    mutate(input);
-  };
+    mutate(input)
+  }
 
   return (
-    <div className="App">
-      {todos?.map((todo) => (
+    <div
+      css={css`
+        /* width: 100%; */
+        /* height: 100%; */
+        /* display: "flex";
+        justify-content: "center";
+        align-items: "center"; */
+      `}
+    >
+      {todos.map((todo) => (
         <div key={todo.id}>{todo.title}</div>
       ))}
 
       <form onSubmit={onSubmit}>
         <input value={input} onChange={(e) => setInput(e.target.value)} />
       </form>
+
+      {/* <FixedBottomCTA>할 일 추가하기</FixedBottomCTA> */}
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
